@@ -208,7 +208,7 @@ def main():
     POBLACION = 30
 
     ## maximo numero de iteraciones
-    MAX_ITERACIONES = 30
+    MAX_ITERACIONES = 14
 
     ## porcentaje de mutacion
     PORCENTAJE_MUTACION = 0.01
