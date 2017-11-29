@@ -141,8 +141,8 @@ def f_mutacion(genes):
     return lista
 
 def main():
-    POBLACION = 50
-    MAX_ITERACIONES = 500
+    POBLACION = 15
+    MAX_ITERACIONES = 30
     PORCENTAJE_MUTACION = 0.01
     poblacion = Poblacion(POBLACION, generador, fitness, f_reproduccion, f_mutacion, PORCENTAJE_MUTACION)
     for i in range(0,MAX_ITERACIONES):
