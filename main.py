@@ -10,17 +10,18 @@ from pyspark.ml.evaluation import BinaryClassificationEvaluator
 '''
 
 ## split y parseo
-def cleanProcess(sc, url, cadena):
+def cleanProcess(sc, url, especie):
     rdd = sc.textFile(url).map(lambda linea: linea.split(","))
 
-    rdd_data = rdd.map(lambda x: map_rdd(cadena, x))
+    rdd_data = rdd.map(lambda x: map_rdd(especie, x))
     #rdd.foreach(lambda x: print(x))
     return rdd_data
 
-def map_rdd(cadena, x):
+## mapeo de especie
+def map_rdd(especie, x):
     indices = []
-    for i in range(0, len(cadena)):
-        if cadena[i] == 1: indices.append(i)
+    for i in range(0, len(especie)):
+        if especie[i] == 1: indices.append(i)
 
     resp = [int(x[1])]
     for i in indices:
@@ -57,17 +58,18 @@ def evaluate_model_regression(label_col, name, data_to_validate):
     evaluator = BinaryClassificationEvaluator(labelCol=label_col, metricName=name, rawPredictionCol='rawPrediction')
     value = evaluator.evaluate(data_to_validate)
     print("{}:{}".format(name, value))
+    ## devuelve el valor del evaluator, puede ser valor de areaUnderROC o areaUnderPR
     return value
 
 ##Metodo para construir los headers
-def get_headers(cadena):
+def get_headers(especie):
     default_headers = ["PRE_POS","WF","SM","BC","DRI","MA","SLT","STT","AG","REACT",
     "AP","INT","VI","CO","CRO","SP","LP","ACC","SPEED","STA","STR","BA","AGI",
     "JU","HE","SHP","FI","LS","CU","FA","PE","VOL","RA"]
 
     indices = []
-    for i in range(0, len(cadena)):
-        if cadena[i] == 1: indices.append(i)
+    for i in range(0, len(especie)):
+        if especie[i] == 1: indices.append(i)
 
     resp = ["PRE_POS"]
     for i in indices:
@@ -76,12 +78,12 @@ def get_headers(cadena):
     return resp
 
 ##Ejecuciòn de modelo  binomial de regresion logistica
-def execute_logistic_regression_binomial(sc, url, cadena, spark):
+def execute_logistic_regression_binomial(sc, url, especie, spark):
     ''' Regresion binomial '''
     print("------------ Regresion binomial --------------")
 
-    rdd_data = cleanProcess(sc, url, cadena)
-    headers = get_headers(cadena)
+    rdd_data = cleanProcess(sc, url, especie)
+    headers = get_headers(especie)
     data = spark.createDataFrame(rdd_data, headers)
     #data.show()
     train, test = data.randomSplit([0.7,0.3], seed=12345)
@@ -103,8 +105,9 @@ def execute_logistic_regression_binomial(sc, url, cadena, spark):
     print("Testing model ...")
 
     data_to_validate = lr_model_binomial.transform(test_data)
-    data_to_validate.show()
+    # data_to_validate.show()
 
+    ## devuelve el valor del evaluator, puede ser valor de areaUnderROC
     return evaluate_model_regression(label_col, 'areaUnderROC',data_to_validate)
     # evaluate_model_regression(label_col, 'areaUnderPR',data_to_validate)
 
@@ -148,7 +151,7 @@ def main():
     spark = SparkSession(sc)
 
     ##Llamada a funciones de regresiones logisticas
-    execute_logistic_regression_binomial(sc, "data/dataConRating1.csv", cadena, spark)
+    execute_logistic_regression_binomial(sc, "data/dataConRating1.csv", especie, spark)
     execute_logistic_regression_multiclass(sc, "data/dataConRating2.csv", spark)
 
 if __name__ == '__main__':
