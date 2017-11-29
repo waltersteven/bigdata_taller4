@@ -19,12 +19,12 @@ def cleanProcess(sc, url, cadena):
 
 def map_rdd(cadena, x):
     indices = []
-    for idx, val in enumarate(cadena):
-        if val = 1: indices.append(idx)
+    for i in range(0, len(cadena)):
+        if cadena[i] == 1: indices.append(i)
 
-    resp = []
-    for idx in indices:
-        resp.append(int(x[idx + 1]))
+    resp = [int(x[1])]
+    for i in indices:
+        resp.append(int(x[i + 2]))
 
     return resp
 
@@ -55,8 +55,25 @@ def parameters_lr_binomial(lr_model):
 ##Metodo que realizar una evaluacion
 def evaluate_model_regression(label_col, name, data_to_validate):
     evaluator = BinaryClassificationEvaluator(labelCol=label_col, metricName=name, rawPredictionCol='rawPrediction')
-    print("{}:{}".format(name,evaluator.evaluate(data_to_validate)))
-    return evaluator
+    value = evaluator.evaluate(data_to_validate)
+    print("{}:{}".format(name, value))
+    return value
+
+##Metodo para construir los headers
+def get_headers(cadena):
+    default_headers = ["PRE_POS","WF","SM","BC","DRI","MA","SLT","STT","AG","REACT",
+    "AP","INT","VI","CO","CRO","SP","LP","ACC","SPEED","STA","STR","BA","AGI",
+    "JU","HE","SHP","FI","LS","CU","FA","PE","VOL","RA"]
+
+    indices = []
+    for i in range(0, len(cadena)):
+        if cadena[i] == 1: indices.append(i)
+
+    resp = ["PRE_POS"]
+    for i in indices:
+        resp.append(default_headers[i + 1])
+
+    return resp
 
 ##Ejecuciòn de modelo  binomial de regresion logistica
 def execute_logistic_regression_binomial(sc, url, cadena, spark):
@@ -64,13 +81,13 @@ def execute_logistic_regression_binomial(sc, url, cadena, spark):
     print("------------ Regresion binomial --------------")
 
     rdd_data = cleanProcess(sc, url, cadena)
-    headers = ["PRE_POS","WF","SM","BC","DRI","MA","SLT","STT","AG","REACT","AP","INT","VI","CO","CRO","SP","LP","ACC","SPEED","STA","STR","BA","AGI","JU","HE","SHP","FI","LS","CU","FA","PE","VOL","RA"]
+    headers = get_headers(cadena)
     data = spark.createDataFrame(rdd_data, headers)
     #data.show()
     train, test = data.randomSplit([0.7,0.3], seed=12345)
     #train.show()
 
-    features = ["WF","SM","BC","DRI","MA","SLT","STT","AG","REACT","AP","INT","VI","CO","CRO","SP","LP","ACC","SPEED","STA","STR","BA","AGI","JU","HE","SHP","FI","LS","CU","FA","PE","VOL","RA"]
+    features = headers[1:]
     output = "features"
     train_data = convert_dataframe(train, features, output)
     # train_data.show()
@@ -131,7 +148,7 @@ def main():
     spark = SparkSession(sc)
 
     ##Llamada a funciones de regresiones logisticas
-    execute_logistic_regression_binomial(sc, "data/dataConRating1.csv", spark)
+    execute_logistic_regression_binomial(sc, "data/dataConRating1.csv", cadena, spark)
     execute_logistic_regression_multiclass(sc, "data/dataConRating2.csv", spark)
 
 if __name__ == '__main__':

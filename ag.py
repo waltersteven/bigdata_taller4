@@ -1,7 +1,23 @@
 import random
 import string
+from main import execute_logistic_regression_binomial
 from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession
+
+
+class MySingleton:
+    instance = None
+
+    @classmethod
+    def get_instance(cls):
+        if cls.instance is None:
+
+            cls.instance = MySingleton
+            cls.conf = SparkConf().setAppName('fifaModel').setMaster('local')
+            cls.sc = SparkContext(conf=cls.conf)
+            cls.spark = SparkSession(cls.sc)
+
+        return cls.instance
 
 
 class ADN:
@@ -109,7 +125,8 @@ def generador():
     return cadena
 
 def fitness(cadena):
-    return execute_logistic_regression_binomial(sc, "data/dataConRating1.csv", get_spark())
+    return execute_logistic_regression_binomial(MySingleton.get_instance().sc,
+            "data/dataConRating1.csv", cadena, MySingleton.get_instance().spark)
 
 def f_reproduccion(pareja1, pareja2):
     k = random.randint(0, len(pareja1.genes))
@@ -135,11 +152,6 @@ def main():
         poblacion.reproduccion()
         print("Promedio Fitness: {}".format(poblacion.promedio_fitness()))
         poblacion.mutar()
-
-def get_spark(self):
-    conf = SparkConf().setAppName('fifaModel').setMaster('local')
-    sc = SparkContext(conf=conf)
-    spark = SparkSession(sc)
 
 
 if __name__ == '__main__':
